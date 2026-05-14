@@ -13,28 +13,18 @@ Wraps two libraries:
 ### Pi coding-agent
 
 ```bash
-# from npm (recommended)
+# 1. Install the extension
 pi install npm:@sttronn/pi-sheets
 
-# or directly from git
-pi install git:github.com/StTronn/pi-sheets
-
-# find the requirements.txt path + install python deps in one step
-pi exec -- python3 -c "
-import sys, glob, os
-for p in glob.glob(os.path.expanduser('~/.pi/agent') + '/**/pi-sheets/skills/xlsx/requirements.txt', recursive=True):
-    print(p)
-" | xargs pip install -r
+# 2. One-shot setup — creates a venv at ~/.local/share/pi-sheets/.venv
+#    and installs python deps. Idempotent; safe to re-run.
+python3 $(find ~/.nvm ~/.pi/agent -name xlsx.py -path '*pi-sheets*' 2>/dev/null | head -1) doctor --install
 ```
 
-If you'd rather see the resolved path yourself first, in a new pi session run
-`/xlsx-doctor` or call the bundled doctor directly (it prints `sys.executable`
-+ the missing dep + the exact `pip install` command):
+Don't have python ≥3.10? Install one with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-python3 ~/.pi/agent/git/github.com/StTronn/pi-sheets/skills/xlsx/scripts/xlsx.py doctor
-# or for npm installs:
-python3 ~/.pi/agent/packages/@sttronn/pi-sheets/skills/xlsx/scripts/xlsx.py doctor
+curl -LsSf https://astral.sh/uv/install.sh | sh && uv python install 3.13
 ```
 
 Pi runs the tiny extension in `src/index.ts`, which contributes `skills/` via
@@ -187,25 +177,18 @@ Prints the exact python interpreter the host picked up plus a copy-pasteable
 launching from a shell whose `PATH` doesn't include the venv that has the
 deps installed.
 
-### `python3` is broken / pyexpat error (macOS Homebrew)
+### `python3` itself is broken
 
-Recent Homebrew installs sometimes leave `python3` pointing at a freshly-built
-interpreter (e.g. 3.14) whose extension modules aren't yet wired up. Symptom:
-
-```
-Library not loaded: @@HOMEBREW_PREFIX@@/.../libexpat.1.dylib
-```
-
-Workaround: invoke a known-good interpreter explicitly. The bundled scripts
-have no shebang requirement — any python ≥3.10 works:
+If `python3 -m venv` fails — usually a packaging issue with whichever python is
+first on your PATH — install a known-good python and re-run `doctor --install`:
 
 ```bash
-python3.13 ~/.pi/agent/git/github.com/StTronn/pi-sheets/skills/xlsx/scripts/xlsx.py doctor
-python3.13 -m pip install --user --break-system-packages -r \
-  ~/.pi/agent/git/github.com/StTronn/pi-sheets/skills/xlsx/requirements.txt
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv python install --default --force
 ```
 
-Once `python3` itself is fixed, you can drop the explicit version.
+`uv` ships standalone python builds that bundle their own stdlib dependencies,
+avoiding most distro-packaging issues.
 
 ## License
 

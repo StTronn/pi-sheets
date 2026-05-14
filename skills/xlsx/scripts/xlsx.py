@@ -25,8 +25,29 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
+
+
+def _maybe_reexec_via_cached_python() -> None:
+    """If install.sh has cached a venv-python path, re-invoke ourselves through
+    it so the user never has to think about which python has the deps."""
+    if os.environ.get("PI_SHEETS_PY_REEXEC") == "1":
+        return
+    state = Path(
+        os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local/state"))
+    ) / "pi-sheets" / "python.txt"
+    if not state.is_file():
+        return
+    target = state.read_text().strip()
+    if not target or target == sys.executable or not os.path.isfile(target):
+        return
+    os.environ["PI_SHEETS_PY_REEXEC"] = "1"
+    os.execv(target, [target, str(Path(__file__).resolve()), *sys.argv[1:]])
+
+
+_maybe_reexec_via_cached_python()
 
 # Self-bootstrap: ensure sibling modules import without host PYTHONPATH setup.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -119,11 +140,17 @@ def _cmd_extend_formula(args: argparse.Namespace) -> int:
         return _fail(str(exc), code=exc.code)
 
 
-def _cmd_doctor(_args: argparse.Namespace) -> int:
+def _cmd_doctor(args: argparse.Namespace) -> int:
     # `doctor` is the one subcommand that must work even when deps are missing,
     # since its whole job is to diagnose missing deps.
     import doctor as doctor_mod
-    return doctor_mod.main()
+    # Rebuild sys.argv so doctor's argparse sees only its own flags.
+    saved = sys.argv
+    sys.argv = ['doctor'] + (['--install'] if getattr(args, 'install', False) else [])
+    try:
+        return doctor_mod.main()
+    finally:
+        sys.argv = saved
 
 
 def main() -> int:
@@ -150,6 +177,8 @@ def main() -> int:
     pe.set_defaults(fn=_cmd_extend_formula)
 
     pd = sub.add_parser("doctor", help="Preflight: verify python env + deps.")
+    pd.add_argument("--install", action="store_true",
+                    help="Auto-create a venv and install deps if missing.")
     pd.set_defaults(fn=_cmd_doctor)
 
     args = p.parse_args()

@@ -24,8 +24,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from event_emit import event, emit_typed
 
 
-def save(wb: Any, path: str) -> None:
-    """Save workbook, convert to Univer JSON, emit workbook_snapshot."""
+def save(wb: Any, path) -> None:
+    """Save workbook, convert to Univer JSON, emit workbook_snapshot.
+
+    Accepts `path` as `str` or `pathlib.Path` (or any path-like object)."""
+    path = os.fspath(path)
     pre = _hash(path) if os.path.exists(path) else ''
     wb.save(path)
     post = _hash(path)

@@ -72,8 +72,10 @@ Tools available in this skill:
 ## Important Requirements
 
 - Every edit happens through Python (`openpyxl`) running in a **bash** subprocess. NEVER use the agent's `write` or `edit` tools on `.xlsx` files — they treat the file as text and will corrupt the binary zip container.
+- **Invoke python via `~/.local/share/pi-sheets/.venv/bin/python`** (created by `install.sh`) instead of bare `python3`. The venv has `openpyxl` + `formualizer` installed; bare `python3` may not. `xlsx.py` itself auto-redirects to this interpreter, but heredocs that the agent writes need to use the absolute path explicitly.
 - Use `xlsx_kit.save(wb, path)` instead of `wb.save(path)`. `xlsx_kit.save` writes the xlsx, generates a Univer JSON sidecar if the bridge is available, and emits a `workbook_snapshot` event (no-op if no consumer is wired up).
-- After ANY formula-bearing edit: `python3 <skill-dir>/scripts/xlsx.py validate <file>`. Do NOT call `audit` and `recalc` separately — `validate` is the union and runs in one pass.
+- After ANY formula-bearing edit: `<skill-dir>/scripts/xlsx.py validate <file>`. Do NOT call `audit` and `recalc` separately — `validate` is the union and runs in one pass.
+- If any script reports `ModuleNotFoundError`, run `<skill-dir>/scripts/xlsx.py doctor --install` once. It creates the venv at `~/.local/share/pi-sheets/.venv` and installs deps. Idempotent.
 
 ## CRITICAL: Use Formulas, Not Hardcoded Values
 
@@ -114,7 +116,7 @@ This applies to ALL calculations — totals, percentages, ratios, differences, m
 
 2. **Edit via openpyxl in a bash heredoc**:
    ```bash
-   python3 <<'PY'
+   ~/.local/share/pi-sheets/.venv/bin/python <<'PY'
    import sys
    sys.path.insert(0, '<skill-dir>/scripts')
    import xlsx_kit
@@ -505,7 +507,7 @@ The host's text-editing tools treat files as UTF-8. An `.xlsx` is a zip archive 
 ### Always use a bash heredoc for multi-step edits
 Single-line `python3 -c '...'` is fine for trivial reads, but multi-step edit + save + validate flows are dramatically more reliable as one heredoc:
 ```bash
-python3 <<'PY'
+~/.local/share/pi-sheets/.venv/bin/python <<'PY'
 ... full flow ...
 PY
 ```
