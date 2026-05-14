@@ -1,0 +1,53 @@
+{
+  "name": "pi-sheets",
+  "version": "0.1.0",
+  "description": "Spreadsheet-editing skill for agentic coding hosts (Claude Code, Codex, Pi). openpyxl + formualizer + a unified CLI; works as a portable skill bundle or as a pi extension.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "pi",
+    "pi-package",
+    "pi-extension",
+    "pi-coding-agent",
+    "claude-code",
+    "codex",
+    "skill",
+    "xlsx",
+    "spreadsheet",
+    "openpyxl",
+    "formualizer"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/StTronn/pi-sheets.git"
+  },
+  "bugs": {
+    "url": "https://github.com/StTronn/pi-sheets/issues"
+  },
+  "homepage": "https://github.com/StTronn/pi-sheets#readme",
+  "pi": {
+    "extensions": ["./src/index.ts"]
+  },
+  "files": [
+    "src",
+    "skill",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": ">=0.74.0"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-coding-agent": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.74.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}
