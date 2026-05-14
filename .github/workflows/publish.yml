@@ -1,0 +1,24 @@
+name: publish
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  # Publish to GitHub Packages (npm.pkg.github.com) — makes the package visible
+  # in the repo's Packages sidebar and on github.com/<user>?tab=packages.
+  github-packages:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@sttronn'
+      - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

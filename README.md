@@ -19,11 +19,25 @@ pi install npm:@sttronn/pi-sheets
 # or directly from git
 pi install git:github.com/StTronn/pi-sheets
 
-# install python deps in whichever python env you launch `pi` from
-pip install -r ~/.pi/agent/extensions/pi-sheets/skill/requirements.txt
+# find the requirements.txt path + install python deps in one step
+pi exec -- python3 -c "
+import sys, glob, os
+for p in glob.glob(os.path.expanduser('~/.pi/agent') + '/**/pi-sheets/skills/xlsx/requirements.txt', recursive=True):
+    print(p)
+" | xargs pip install -r
 ```
 
-Pi runs the tiny extension in `src/index.ts`, which contributes `skill/` via
+If you'd rather see the resolved path yourself first, in a new pi session run
+`/xlsx-doctor` or call the bundled doctor directly (it prints `sys.executable`
++ the missing dep + the exact `pip install` command):
+
+```bash
+python3 ~/.pi/agent/git/github.com/StTronn/pi-sheets/skills/xlsx/scripts/xlsx.py doctor
+# or for npm installs:
+python3 ~/.pi/agent/packages/@sttronn/pi-sheets/skills/xlsx/scripts/xlsx.py doctor
+```
+
+Pi runs the tiny extension in `src/index.ts`, which contributes `skills/` via
 `resources_discover`. The agent automatically loads `SKILL.md` and follows the
 workflow.
 
@@ -33,9 +47,9 @@ workflow.
 git clone https://github.com/StTronn/pi-sheets ~/code/pi-sheets
 
 mkdir -p ~/.claude/skills
-ln -s ~/code/pi-sheets/skill ~/.claude/skills/xlsx
+ln -s ~/code/pi-sheets/skills/xlsx ~/.claude/skills/xlsx
 
-pip install -r ~/code/pi-sheets/skill/requirements.txt
+pip install -r ~/code/pi-sheets/skills/xlsx/requirements.txt
 ```
 
 For project-local: symlink to `<your-project>/.claude/skills/xlsx`.
@@ -46,9 +60,9 @@ For project-local: symlink to `<your-project>/.claude/skills/xlsx`.
 git clone https://github.com/StTronn/pi-sheets ~/code/pi-sheets
 
 mkdir -p ~/.codex/skills
-ln -s ~/code/pi-sheets/skill ~/.codex/skills/xlsx
+ln -s ~/code/pi-sheets/skills/xlsx ~/.codex/skills/xlsx
 
-pip install -r ~/code/pi-sheets/skill/requirements.txt
+pip install -r ~/code/pi-sheets/skills/xlsx/requirements.txt
 ```
 
 For project-local: symlink to `<your-project>/.codex/skills/xlsx`.
@@ -58,27 +72,33 @@ For project-local: symlink to `<your-project>/.codex/skills/xlsx`.
 ```bash
 git clone https://github.com/StTronn/pi-sheets ~/code/pi-sheets
 cd ~/code/pi-sheets && npm install            # only needed for typechecking src/
-pip install -r skill/requirements.txt
+pip install -r skills/xlsx/requirements.txt
 ```
 
-Symlink `skill/` into the host's skill discovery dir as shown above.
+Symlink `skills/xlsx/` into the host's skill discovery dir as shown above.
 
 ## Repo layout
 
 ```
 pi-sheets/
-├── skill/        ← host-agnostic skill bundle (Pi, Claude Code, Codex all use this)
-│   ├── SKILL.md
-│   ├── scripts/
-│   └── requirements.txt
+├── skills/
+│   └── xlsx/     ← host-agnostic skill bundle (Pi, Claude Code, Codex all use this)
+│       ├── SKILL.md
+│       ├── scripts/
+│       └── requirements.txt
 └── src/          ← 16-LOC pi-extension shim (skill registration only)
     └── index.ts
 ```
 
-The `skill/` directory is the canonical artifact. `src/index.ts` is a tiny pi
-extension whose only job is to register `skill/` as a skill path when the
-package is installed via `pi install`. Claude Code and Codex ignore it and
-consume `skill/` directly via symlinks.
+The `skills/xlsx/` directory is the canonical artifact. `src/index.ts` is a
+tiny pi extension whose only job is to register `skills/` as a skill path when
+the package is installed via `pi install`. Claude Code and Codex ignore it and
+consume `skills/xlsx/` directly via symlinks.
+
+Why `skills/xlsx/` (not bare `skill/`)? Pi enforces the [Agent Skills
+spec](https://github.com/anthropics/skills): a skill's `SKILL.md` frontmatter
+`name:` must match its parent directory name. Our `name: xlsx` therefore lives
+in `xlsx/`, contained in `skills/` (the registered skill-path).
 
 ## Usage
 
@@ -102,8 +122,8 @@ info = inspect("wb.xlsx")
 report = validate("wb.xlsx")
 ```
 
-See [`skill/SKILL.md`](skill/SKILL.md) for the full agent-facing workflow and
-[`skill/scripts/EVENTS.md`](skill/scripts/EVENTS.md) for the optional event
+See [`skills/xlsx/SKILL.md`](skills/xlsx/SKILL.md) for the full agent-facing workflow and
+[`skills/xlsx/scripts/EVENTS.md`](skills/xlsx/scripts/EVENTS.md) for the optional event
 wire contract.
 
 ## Optional: event wire
@@ -121,12 +141,12 @@ tail -F /tmp/xlsx-events.ndjson | jq .
 ```
 
 Useful for live workbook viewers, progress dashboards, or post-hoc inspection.
-Full schema: [`skill/scripts/EVENTS.md`](skill/scripts/EVENTS.md).
+Full schema: [`skills/xlsx/scripts/EVENTS.md`](skills/xlsx/scripts/EVENTS.md).
 
 ## What the skill itself ships
 
 ```
-skill/
+skills/xlsx/
 ├── SKILL.md
 ├── README.md
 ├── requirements.txt
@@ -151,7 +171,7 @@ agent's perspective and work identically in all three hosts.
 ## Requirements
 
 - Python 3.10+
-- `openpyxl >= 3.1`, `formualizer >= 0.5.8` (in `skill/requirements.txt`)
+- `openpyxl >= 3.1`, `formualizer >= 0.5.8` (in `skills/xlsx/requirements.txt`)
 - For `pi install` use: `@earendil-works/pi-coding-agent` ≥ 0.74.0 (peer dependency, host-provided)
 
 ## Troubleshooting
@@ -159,13 +179,33 @@ agent's perspective and work identically in all three hosts.
 If a script fails with `ModuleNotFoundError`:
 
 ```bash
-python3 skill/scripts/xlsx.py doctor
+python3 skills/xlsx/scripts/xlsx.py doctor
 ```
 
 Prints the exact python interpreter the host picked up plus a copy-pasteable
 `pip install` command for any missing deps. Most issues come from the host
 launching from a shell whose `PATH` doesn't include the venv that has the
 deps installed.
+
+### `python3` is broken / pyexpat error (macOS Homebrew)
+
+Recent Homebrew installs sometimes leave `python3` pointing at a freshly-built
+interpreter (e.g. 3.14) whose extension modules aren't yet wired up. Symptom:
+
+```
+Library not loaded: @@HOMEBREW_PREFIX@@/.../libexpat.1.dylib
+```
+
+Workaround: invoke a known-good interpreter explicitly. The bundled scripts
+have no shebang requirement — any python ≥3.10 works:
+
+```bash
+python3.13 ~/.pi/agent/git/github.com/StTronn/pi-sheets/skills/xlsx/scripts/xlsx.py doctor
+python3.13 -m pip install --user --break-system-packages -r \
+  ~/.pi/agent/git/github.com/StTronn/pi-sheets/skills/xlsx/requirements.txt
+```
+
+Once `python3` itself is fixed, you can drop the explicit version.
 
 ## License
 

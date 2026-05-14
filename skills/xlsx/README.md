@@ -10,7 +10,7 @@ importable python module.
 ## What's inside
 
 ```
-skill/
+xlsx/
 ├── SKILL.md              Agent-facing workflow (loaded by host)
 ├── README.md             This file (humans)
 ├── requirements.txt      Python deps: openpyxl, formualizer
@@ -41,7 +41,7 @@ pi install npm:@sttronn/pi-sheets
 # or directly from git
 pi install git:github.com/StTronn/pi-sheets
 
-pip install -r ~/.pi/agent/extensions/pi-sheets/skill/requirements.txt
+pip install -r ~/.pi/agent/extensions/pi-sheets/skills/xlsx/requirements.txt
 ```
 
 See `../README.md` for full docs.
@@ -54,10 +54,10 @@ git clone https://github.com/StTronn/pi-sheets ~/code/pi-sheets
 
 # symlink THIS DIRECTORY into Claude Code's skill discovery path
 mkdir -p ~/.claude/skills
-ln -s ~/code/pi-sheets/skill ~/.claude/skills/xlsx
+ln -s ~/code/pi-sheets/skills/xlsx ~/.claude/skills/xlsx
 
 # install python deps (any venv works; activate before launching `claude`)
-pip install -r ~/code/pi-sheets/skill/requirements.txt
+pip install -r ~/code/pi-sheets/skills/xlsx/requirements.txt
 ```
 
 Claude Code auto-discovers the skill on next launch. The `description:` field
@@ -73,9 +73,9 @@ For project-local installs instead of global, symlink into
 git clone https://github.com/StTronn/pi-sheets ~/code/pi-sheets
 
 mkdir -p ~/.codex/skills
-ln -s ~/code/pi-sheets/skill ~/.codex/skills/xlsx
+ln -s ~/code/pi-sheets/skills/xlsx ~/.codex/skills/xlsx
 
-pip install -r ~/code/pi-sheets/skill/requirements.txt
+pip install -r ~/code/pi-sheets/skills/xlsx/requirements.txt
 ```
 
 Same auto-discovery model. Project-local equivalent:

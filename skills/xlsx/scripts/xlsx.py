@@ -16,6 +16,10 @@ Usage:
 Library use: prefer importing the operation modules directly
     (`from inspect_xlsx import inspect`, etc.) over invoking this CLI in a
     subprocess from python.
+
+Note: operation modules are imported lazily inside each subcommand handler so
+that `doctor` works even when openpyxl / formualizer are missing. The doctor
+is the right thing to run when a `ModuleNotFoundError` appears elsewhere.
 """
 from __future__ import annotations
 
@@ -26,12 +30,6 @@ from pathlib import Path
 
 # Self-bootstrap: ensure sibling modules import without host PYTHONPATH setup.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-
-from inspect_xlsx import inspect, InspectError
-from audit_xlsx import audit, AuditError
-from recalc_xlsx import recalc, RecalcError
-from validate_xlsx import validate, ValidateError
-from extend_formula import extend_formula, ExtendFormulaError
 
 
 def _print(result: dict) -> int:
@@ -44,7 +42,21 @@ def _fail(msg: str, *, code: str = "error") -> int:
     return 1
 
 
+def _missing_dep_hint(exc: ModuleNotFoundError) -> int:
+    skill_dir = Path(__file__).resolve().parent.parent
+    return _fail(
+        f"missing python dependency: {exc.name}. "
+        f"Run `python3 {Path(__file__).resolve()} doctor` for details, "
+        f"or install: pip install -r {skill_dir}/requirements.txt",
+        code="missing_dependency",
+    )
+
+
 def _cmd_inspect(args: argparse.Namespace) -> int:
+    try:
+        from inspect_xlsx import inspect, InspectError
+    except ModuleNotFoundError as exc:
+        return _missing_dep_hint(exc)
     try:
         return _print(inspect(args.path))
     except InspectError as exc:
@@ -53,12 +65,20 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
 
 def _cmd_audit(args: argparse.Namespace) -> int:
     try:
+        from audit_xlsx import audit, AuditError
+    except ModuleNotFoundError as exc:
+        return _missing_dep_hint(exc)
+    try:
         return _print(audit(args.path))
     except AuditError as exc:
         return _fail(str(exc), code=exc.code)
 
 
 def _cmd_recalc(args: argparse.Namespace) -> int:
+    try:
+        from recalc_xlsx import recalc, RecalcError
+    except ModuleNotFoundError as exc:
+        return _missing_dep_hint(exc)
     try:
         result = recalc(
             args.path,
@@ -71,12 +91,21 @@ def _cmd_recalc(args: argparse.Namespace) -> int:
 
 def _cmd_validate(args: argparse.Namespace) -> int:
     try:
+        from validate_xlsx import validate, ValidateError
+        from recalc_xlsx import RecalcError
+    except ModuleNotFoundError as exc:
+        return _missing_dep_hint(exc)
+    try:
         return _print(validate(args.path))
     except (ValidateError, RecalcError) as exc:
         return _fail(str(exc), code=exc.code)
 
 
 def _cmd_extend_formula(args: argparse.Namespace) -> int:
+    try:
+        from extend_formula import extend_formula, ExtendFormulaError
+    except ModuleNotFoundError as exc:
+        return _missing_dep_hint(exc)
     try:
         result = extend_formula(
             args.path,
@@ -91,7 +120,8 @@ def _cmd_extend_formula(args: argparse.Namespace) -> int:
 
 
 def _cmd_doctor(_args: argparse.Namespace) -> int:
-    # Defer import so doctor is loadable even when other modules' deps are missing.
+    # `doctor` is the one subcommand that must work even when deps are missing,
+    # since its whole job is to diagnose missing deps.
     import doctor as doctor_mod
     return doctor_mod.main()
 
