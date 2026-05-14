@@ -1,5 +1,5 @@
 {
-  "name": "pi-sheets",
+  "name": "@sttronn/pi-sheets",
   "version": "0.1.0",
   "description": "Spreadsheet-editing skill for agentic coding hosts (Claude Code, Codex, Pi). openpyxl + formualizer + a unified CLI; works as a portable skill bundle or as a pi extension.",
   "type": "module",

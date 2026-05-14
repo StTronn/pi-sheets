@@ -14,7 +14,7 @@ Wraps two libraries:
 
 ```bash
 # from npm (recommended)
-pi install npm:pi-sheets
+pi install npm:@sttronn/pi-sheets
 
 # or directly from git
 pi install git:github.com/StTronn/pi-sheets
