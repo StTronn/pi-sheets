@@ -2,30 +2,30 @@
 
 A spreadsheet-editing skill for agentic coding hosts — orient → edit via
 `openpyxl` → save via `xlsx_kit` → validate, preserving formulas and structure.
-Works in **Claude Code**, **OpenAI Codex**, and **Pi coding-agent**.
+Works in **Pi coding-agent**, **Claude Code**, and **OpenAI Codex**.
 
 Wraps two libraries:
 - **[openpyxl](https://openpyxl.readthedocs.io/)** for workbook IO
 - **[formualizer](https://pypi.org/project/formualizer/)** (Rust + Python bindings) for in-process formula recalc
 
-## Repo layout
-
-```
-pi-sheets/
-├── skill/        ← host-agnostic skill bundle (Claude Code, Codex, Pi all use this)
-│   ├── SKILL.md
-│   ├── scripts/
-│   └── requirements.txt
-└── src/          ← 15-LOC pi-extension shim (skill registration only)
-    └── index.ts
-```
-
-The `skill/` directory is the canonical artifact. `src/index.ts` is a tiny pi
-extension whose only job is to register `skill/` as a skill path when the
-package is installed via `pi install`. Claude Code and Codex ignore it and
-consume `skill/` directly via symlinks.
-
 ## Install
+
+### Pi coding-agent
+
+```bash
+# from npm (recommended)
+pi install npm:pi-sheets
+
+# or directly from git
+pi install git:github.com/StTronn/pi-sheets
+
+# install python deps in whichever python env you launch `pi` from
+pip install -r ~/.pi/agent/extensions/pi-sheets/skill/requirements.txt
+```
+
+Pi runs the tiny extension in `src/index.ts`, which contributes `skill/` via
+`resources_discover`. The agent automatically loads `SKILL.md` and follows the
+workflow.
 
 ### Claude Code
 
@@ -53,23 +53,6 @@ pip install -r ~/code/pi-sheets/skill/requirements.txt
 
 For project-local: symlink to `<your-project>/.codex/skills/xlsx`.
 
-### Pi coding-agent
-
-```bash
-# from a published npm package (once you publish it)
-pi install npm:pi-sheets
-
-# or directly from git
-pi install git:github.com/StTronn/pi-sheets
-
-# install python deps in whichever python env you launch `pi` from
-pip install -r ~/.pi/agent/extensions/pi-sheets/skill/requirements.txt
-```
-
-Pi installs the repo, runs the tiny extension in `src/index.ts`, which
-contributes `skill/` via `resources_discover`. The agent automatically loads
-`SKILL.md` and follows the workflow.
-
 ### Manual / development install (any host)
 
 ```bash
@@ -79,6 +62,23 @@ pip install -r skill/requirements.txt
 ```
 
 Symlink `skill/` into the host's skill discovery dir as shown above.
+
+## Repo layout
+
+```
+pi-sheets/
+├── skill/        ← host-agnostic skill bundle (Pi, Claude Code, Codex all use this)
+│   ├── SKILL.md
+│   ├── scripts/
+│   └── requirements.txt
+└── src/          ← 16-LOC pi-extension shim (skill registration only)
+    └── index.ts
+```
+
+The `skill/` directory is the canonical artifact. `src/index.ts` is a tiny pi
+extension whose only job is to register `skill/` as a skill path when the
+package is installed via `pi install`. Claude Code and Codex ignore it and
+consume `skill/` directly via symlinks.
 
 ## Usage
 

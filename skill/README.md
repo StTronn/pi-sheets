@@ -1,10 +1,10 @@
 # xlsx skill bundle
 
-A self-contained spreadsheet-editing skill for agentic coding hosts (Claude
-Code, Codex, Pi). Wraps `openpyxl` + the `formualizer` calc engine behind a
-mandatory four-step workflow (inspect → edit → save via `xlsx_kit` → validate),
-exposing every operation as both a CLI subcommand and an importable python
-module.
+A self-contained spreadsheet-editing skill for agentic coding hosts (Pi,
+Claude Code, Codex). Wraps `openpyxl` + the `formualizer` calc engine behind
+a mandatory four-step workflow (inspect → edit → save via `xlsx_kit` →
+validate), exposing every operation as both a CLI subcommand and an
+importable python module.
 
 
 ## What's inside
@@ -15,7 +15,7 @@ skill/
 ├── README.md             This file (humans)
 ├── requirements.txt      Python deps: openpyxl, formualizer
 └── scripts/
-    ├── xlsx.py           Unified CLI (inspect / audit / recalc / validate / snapshot / extend-formula / doctor)
+    ├── xlsx.py           Unified CLI (inspect / audit / recalc / validate / extend-formula / doctor)
     ├── inspect_xlsx.py   Pure function + per-script CLI: workbook structure summary
     ├── audit_xlsx.py     Formula audit (broken refs, cached errors)
     ├── recalc_xlsx.py    Recalc via formualizer
@@ -35,7 +35,12 @@ Use the parent `pi-sheets` package. The tiny extension in `../src/index.ts`
 registers this directory via `resources_discover`:
 
 ```bash
+# from npm
+pi install npm:pi-sheets
+
+# or directly from git
 pi install git:github.com/StTronn/pi-sheets
+
 pip install -r ~/.pi/agent/extensions/pi-sheets/skill/requirements.txt
 ```
 
